@@ -795,6 +795,8 @@ button {
   }
 }
 
+
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1526,9 +1528,10 @@ body {
   transform: translate(-50%, calc(-50% + var(--hop-y, 0px))) translateZ(8px)
     scale(var(--hop-scale, 1));
   transition:
-    left 125ms cubic-bezier(0.22, 0.75, 0.25, 1),
-    top 125ms cubic-bezier(0.22, 0.75, 0.25, 1),
-    transform 125ms cubic-bezier(0.22, 0.75, 0.25, 1);
+    left 220ms cubic-bezier(0.22, 0.75, 0.25, 1),
+    top 220ms cubic-bezier(0.22, 0.75, 0.25, 1),
+    transform 220ms cubic-bezier(0.22, 0.75, 0.25, 1);
+  will-change: left, top, transform;
 }
 
 .animated-token .token-shine {
@@ -1849,5 +1852,65 @@ body {
 
   .base-dice-position .dice-hint {
     font-size: 6px;
+  }
+}
+
+/* Final viewport sizing overrides for the fixed, zoomed play surface. */
+@media (min-width: 521px) {
+  .game-page {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 14px 22px 18px;
+  }
+
+  .game-topbar {
+    margin-bottom: 8px;
+  }
+
+  .game-room {
+    display: grid;
+    min-height: 0;
+    height: calc(100dvh - 78px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .game-board-area {
+    width: min(94vw, calc(100dvh - 118px), 1120px);
+    max-height: calc(100dvh - 118px);
+  }
+
+  .board-card {
+    padding: 8px;
+  }
+
+  .board-heading {
+    margin-bottom: 7px;
+  }
+
+  .board-frame {
+    padding: 6px;
+  }
+}
+
+@media (max-width: 520px) {
+  .game-page {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    min-height: 100dvh;
+    overflow: hidden auto;
+  }
+
+  .game-room {
+    min-height: calc(100dvh - 76px);
+  }
+
+  .game-board-area {
+    width: min(98vw, calc(100dvh - 118px));
   }
 }

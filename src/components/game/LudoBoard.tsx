@@ -151,7 +151,6 @@ export default function LudoBoard({
         const coordinate = tokenCoordinate(owner, progress);
         if (coordinate) route.push(coordinate);
       }
-
     }
 
     movingRef.current = true;
@@ -179,7 +178,7 @@ export default function LudoBoard({
         step,
         color: PLAYER_COLORS[owner.color].hex,
       });
-      timerRef.current = setTimeout(advance, 125);
+      timerRef.current = setTimeout(advance, 220);
     };
 
     timerRef.current = setTimeout(advance, 35);
@@ -319,27 +318,26 @@ export default function LudoBoard({
                     {occupants.length > 1 && (
                       <span className="token-count">x{occupants.length}</span>
                     )}
-                    {animatedToken && (
-                      <div
-                        aria-hidden="true"
-                        className="animated-token"
-                        key={animatedToken.id}
-                        style={{
-                          left: `${((animatedToken.coordinate.col + 0.5) / 15) * 100}%`,
-                          top: `${((animatedToken.coordinate.row + 0.5) / 15) * 100}%`,
-                          "--player-color": animatedToken.color,
-                          "--hop-y": animatedToken.step % 2 === 1 ? "-7px" : "0px",
-                          "--hop-scale": animatedToken.step % 2 === 1 ? "1.08" : "1",
-                        } as CSSProperties}
-                      >
-                        <span className="token-shine" />
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             );
           })}
+          {animatedToken && (
+            <div
+              aria-hidden="true"
+              className="animated-token"
+              style={{
+                left: `${((animatedToken.coordinate.col + 0.5) / 15) * 100}%`,
+                top: `${((animatedToken.coordinate.row + 0.5) / 15) * 100}%`,
+                "--player-color": animatedToken.color,
+                "--hop-y": animatedToken.step % 2 === 1 ? "-7px" : "0px",
+                "--hop-scale": animatedToken.step % 2 === 1 ? "1.08" : "1",
+              } as CSSProperties}
+            >
+              <span className="token-shine" />
+            </div>
+          )}
           {trajectory.length > 0 && (
             <div className="trajectory-layer" aria-hidden="true">
               {trajectory.map((coordinate, index) => (

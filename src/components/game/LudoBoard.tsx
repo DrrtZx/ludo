@@ -113,6 +113,7 @@ export default function LudoBoard({
     return result;
   }, [players]);
   const validIds = new Set(validTokenIds);
+  const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null);
   const [animatedToken, setAnimatedToken] = useState<AnimatedToken | null>(null);
   const movingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +151,7 @@ export default function LudoBoard({
         const coordinate = tokenCoordinate(owner, progress);
         if (coordinate) route.push(coordinate);
       }
+
     }
 
     movingRef.current = true;
@@ -182,6 +184,26 @@ export default function LudoBoard({
 
     timerRef.current = setTimeout(advance, 35);
   }
+
+  const hoveredToken = hoveredTokenId
+    ? tokens.find((token) => token.id === hoveredTokenId)
+    : null;
+  const hoveredOwner = hoveredToken
+    ? players.find((player) => player.id === hoveredToken.playerId)
+    : null;
+  const trajectory =
+    hoveredToken && hoveredOwner && diceValue !== null
+      ? Array.from(
+          { length: hoveredToken.progress === -1 ? 1 : diceValue },
+          (_, index) =>
+            tokenCoordinate(
+              hoveredOwner,
+              hoveredToken.progress === -1
+                ? 0
+                : hoveredToken.progress + index + 1,
+            ),
+        ).filter((coordinate): coordinate is Coordinate => coordinate !== null)
+      : [];
 
   return (
     <div className="board-card">
@@ -285,11 +307,18 @@ export default function LudoBoard({
                           key={token.id}
                           label={`${owner.name}, pion ${token.id.slice(-1)}${selectable ? ", pilih untuk bergerak" : ""}`}
                           onClick={() => animateMove(token.id)}
+                          onMouseEnter={() =>
+                            selectable && setHoveredTokenId(token.id)
+                          }
+                          onMouseLeave={() => setHoveredTokenId(null)}
                           selectable={selectable}
                           small={!onCurrentPlayer && occupants.length > 1}
                         />
                       );
                     })}
+                    {occupants.length > 1 && (
+                      <span className="token-count">x{occupants.length}</span>
+                    )}
                     {animatedToken && (
                       <div
                         aria-hidden="true"
@@ -311,6 +340,20 @@ export default function LudoBoard({
               </div>
             );
           })}
+          {trajectory.length > 0 && (
+            <div className="trajectory-layer" aria-hidden="true">
+              {trajectory.map((coordinate, index) => (
+                <span
+                  className="trajectory-ghost"
+                  key={`${coordinate.row},${coordinate.col}-${index}`}
+                  style={{
+                    left: `${((coordinate.col + 0.5) / 15) * 100}%`,
+                    top: `${((coordinate.row + 0.5) / 15) * 100}%`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <div aria-label="Warna pemain" className="board-footer">

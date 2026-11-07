@@ -15,6 +15,13 @@ export interface TokenState {
   progress: number;
 }
 
+export interface TurnHistoryEntry {
+  id: string;
+  playerId: string;
+  roll: number;
+  message: string;
+}
+
 export interface Coordinate {
   row: number;
   col: number;
@@ -26,6 +33,8 @@ export interface GameState {
   tokens: TokenState[];
   currentPlayerIndex: number;
   diceValue: number | null;
+  consecutiveSixes: number;
+  history: TurnHistoryEntry[];
   validTokenIds: string[];
   winnerId: string | null;
   lastRoll: number | null;

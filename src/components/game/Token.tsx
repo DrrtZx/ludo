@@ -9,6 +9,8 @@ interface TokenProps {
   selectable?: boolean;
   small?: boolean;
   onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export default function Token({
@@ -18,6 +20,8 @@ export default function Token({
   selectable = false,
   small = false,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: TokenProps) {
   const style = { "--player-color": color } as CSSProperties;
 
@@ -25,9 +29,11 @@ export default function Token({
     <button
       aria-label={label}
       aria-pressed={selectable}
-      className={`token-button${selectable ? " is-selectable" : ""}${small ? " token-small" : ""}`}
+      className={`token-button${selectable ? " is-selectable" : " token-locked"}${small ? " token-small" : ""}`}
       disabled={!selectable}
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       style={style}
       title={label}
       type="button"

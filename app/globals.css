@@ -476,6 +476,57 @@ button {
   cursor: default;
 }
 
+.token-button.token-locked {
+  filter: grayscale(0.75);
+  opacity: 0.5;
+}
+
+.token-count {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  z-index: 3;
+  min-width: 13px;
+  padding: 1px 3px;
+  border-radius: 8px;
+  background: #242a40;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.trajectory-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.trajectory-ghost {
+  position: absolute;
+  width: 4%;
+  aspect-ratio: 1;
+  border: 2px dashed #7164e8aa;
+  border-radius: 50%;
+  background: #7164e820;
+  transform: translate(-50%, -50%);
+}
+
+.turn-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  justify-content: center;
+  padding: 8px 12px;
+  color: #aeb3c3;
+  font-size: 10px;
+}
+
+.turn-history strong {
+  color: #f0f1f8;
+}
+
 .token-shine {
   width: 28%;
   height: 28%;

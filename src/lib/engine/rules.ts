@@ -19,10 +19,70 @@ export function legalTokenIds(
     .filter((token) => token.playerId === player.id)
     .filter((token) => {
       if (token.progress === FINISH_PROGRESS) return false;
-      if (token.progress === -1) return diceValue === 6;
-      return token.progress + diceValue <= FINISH_PROGRESS;
+      if (token.progress === -1) {
+        return (
+          diceValue === 6 &&
+          !hasOpponentBlockadeOnPath(state, player, token, diceValue)
+        );
+      }
+      return (
+        token.progress + diceValue <= FINISH_PROGRESS &&
+        !hasOpponentBlockadeOnPath(state, player, token, diceValue)
+      );
     })
     .map((token) => token.id);
+}
+
+function trackOccupantsAt(
+  state: GameState,
+  trackIndex: number,
+): TokenState[] {
+  return state.tokens.filter((candidate) => {
+    if (candidate.progress < 0 || candidate.progress > 51) return false;
+    const owner = state.players.find(
+      (player) => player.id === candidate.playerId,
+    );
+    return owner
+      ? trackIndexForProgress(owner.startIndex, candidate.progress) === trackIndex
+      : false;
+  });
+}
+
+function hasOpponentBlockade(
+  state: GameState,
+  player: Player,
+  trackIndex: number,
+): boolean {
+  const occupants = trackOccupantsAt(state, trackIndex);
+  return state.players.some((owner) => {
+    if (owner.id === player.id) return false;
+    return (
+      occupants.filter((token) => token.playerId === owner.id).length >= 2
+    );
+  });
+}
+
+export function hasOpponentBlockadeOnPath(
+  state: GameState,
+  player: Player,
+  token: TokenState,
+  diceValue: number,
+): boolean {
+  const startProgress = token.progress === -1 ? 0 : token.progress + 1;
+  const endProgress =
+    token.progress === -1 ? 0 : token.progress + diceValue;
+
+  for (
+    let progress = startProgress;
+    progress <= endProgress && progress <= 51;
+    progress += 1
+  ) {
+    const trackIndex = trackIndexForProgress(player.startIndex, progress);
+    if (trackIndex !== null && hasOpponentBlockade(state, player, trackIndex)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function destinationProgress(

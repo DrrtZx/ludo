@@ -1,4 +1,11 @@
-import { COLOR_SEATS, type GameState, type Player, type PlayerColor, type PlayerSetup, type TokenState } from "@/src/types/game";
+import {
+  COLOR_SEATS,
+  type GameState,
+  type Player,
+  type PlayerColor,
+  type PlayerSetup,
+  type TokenState,
+} from "@/src/types/game";
 import { START_INDICES } from "@/src/lib/engine/board";
 import {
   capturedTokenIds,
@@ -18,6 +25,8 @@ export const initialGameState: GameState = {
   tokens: [],
   currentPlayerIndex: 0,
   diceValue: null,
+  consecutiveSixes: 0,
+  history: [],
   validTokenIds: [],
   winnerId: null,
   lastRoll: null,
@@ -39,6 +48,8 @@ function freshMatch(players: Player[]): GameState {
     tokens,
     currentPlayerIndex: 0,
     diceValue: null,
+    consecutiveSixes: 0,
+    history: [],
     validTokenIds: [],
     winnerId: null,
     lastRoll: null,
@@ -69,6 +80,19 @@ function nextPlayerIndex(state: GameState): number {
   return (state.currentPlayerIndex + 1) % state.players.length;
 }
 
+function addHistory(
+  state: GameState,
+  playerId: string,
+  roll: number,
+  message: string,
+): GameState["history"] {
+  const history = state.history ?? [];
+  return [
+    ...history,
+    { id: `${playerId}-${history.length}-${roll}`, playerId, roll, message },
+  ].slice(-8);
+}
+
 export function gameReducer(
   state: GameState,
   action: GameAction,
@@ -94,34 +118,74 @@ export function gameReducer(
 
       const player = state.players[state.currentPlayerIndex];
       if (!player) return state;
-      const moves = legalTokenIds(state, player, action.payload.value);
-      if (moves.length === 0) {
-        const nextIndex = nextPlayerIndex(state);
-        const nextPlayer = state.players[nextIndex];
-        return {
-          ...state,
-          currentPlayerIndex: nextIndex,
-          lastRoll: action.payload.value,
-          lastRollByPlayer: {
-            ...state.lastRollByPlayer,
-            [player.id]: action.payload.value,
-          },
-          message: `${player.name} mendapat ${action.payload.value}, tetapi tidak ada langkah yang valid. Giliran ${nextPlayer.name}.`,
-        };
-      }
-      return {
-        ...state,
-        diceValue: action.payload.value,
+      const consecutiveSixes =
+        action.payload.value === 6 ? (state.consecutiveSixes ?? 0) + 1 : 0;
+      const baseRollState = {
         lastRoll: action.payload.value,
         lastRollByPlayer: {
           ...state.lastRollByPlayer,
           [player.id]: action.payload.value,
         },
+      };
+
+      if (consecutiveSixes >= 3) {
+        const nextIndex = nextPlayerIndex(state);
+        const message = `${player.name} mendapat Triple 6. Lemparan ketiga dibatalkan.`;
+        return {
+          ...state,
+          ...baseRollState,
+          currentPlayerIndex: nextIndex,
+          diceValue: null,
+          consecutiveSixes: 0,
+          validTokenIds: [],
+          history: addHistory(
+            state,
+            player.id,
+            action.payload.value,
+            message,
+          ),
+          message,
+        };
+      }
+
+      const moves = legalTokenIds(state, player, action.payload.value);
+      if (moves.length === 0) {
+        const nextIndex = nextPlayerIndex(state);
+        const nextPlayer = state.players[nextIndex];
+        const message = `${player.name} mendapat ${action.payload.value}, tetapi tidak ada langkah yang valid. Giliran ${nextPlayer.name}.`;
+        return {
+          ...state,
+          ...baseRollState,
+          currentPlayerIndex: nextIndex,
+          diceValue: null,
+          consecutiveSixes: 0,
+          validTokenIds: [],
+          history: addHistory(
+            state,
+            player.id,
+            action.payload.value,
+            message,
+          ),
+          message,
+        };
+      }
+      const message =
+        action.payload.value === 6
+          ? `${player.name} mendapat 6! Pilih pion untuk melangkah.`
+          : `${player.name}, pilih salah satu pion yang menyala.`;
+      return {
+        ...state,
+        ...baseRollState,
+        diceValue: action.payload.value,
+        consecutiveSixes,
         validTokenIds: moves,
-        message:
-          action.payload.value === 6
-            ? `${player.name} mendapat 6! Pilih pion untuk melangkah, lalu lempar lagi.`
-            : `${player.name}, pilih salah satu pion yang menyala.`,
+        history: addHistory(
+          state,
+          player.id,
+          action.payload.value,
+          message,
+        ),
+        message,
       };
     }
 
@@ -166,31 +230,36 @@ export function gameReducer(
           phase: "finished",
           tokens,
           diceValue: null,
+          consecutiveSixes: 0,
           validTokenIds: [],
           winnerId: player.id,
           message: `${player.name} memenangkan permainan!`,
         };
       }
 
-      const extraTurn = state.diceValue === 6;
+      const captured = capturedIds.length > 0;
+      const reachedHome = nextProgress === 57;
+      const extraTurn = state.diceValue === 6 || captured || reachedHome;
       const currentPlayerIndex = extraTurn
         ? state.currentPlayerIndex
         : nextPlayerIndex(state);
       const nextPlayer = state.players[currentPlayerIndex];
-      const captureMessage =
-        capturedIds.length > 0
-          ? ` ${capturedIds.length} pion lawan kembali ke base.`
-          : "";
+      const eventMessages = [
+        captured ? `CAPTURED! ${capturedIds.length} pion lawan kembali ke base.` : "",
+        reachedHome ? "HOME! Lempar lagi." : "",
+      ].filter(Boolean);
+      const message = extraTurn
+        ? `${player.name} mendapat giliran tambahan! ${eventMessages.join(" ")}`
+        : `${nextPlayer?.name ?? "Pemain berikutnya"} mendapat giliran. ${eventMessages.join(" ")}`;
 
       return {
         ...state,
         tokens,
         currentPlayerIndex,
         diceValue: null,
+        consecutiveSixes: state.consecutiveSixes,
         validTokenIds: [],
-        message: extraTurn
-          ? `${player.name} mendapat giliran tambahan!${captureMessage}`
-          : `${nextPlayer?.name ?? "Pemain berikutnya"} mendapat giliran.${captureMessage}`,
+        message,
       };
     }
 

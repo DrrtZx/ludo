@@ -58,6 +58,9 @@ export default function GameShell() {
       </header>
 
       <div className="game-room">
+        <p aria-live="polite" className="game-status-message">
+          {game.message}
+        </p>
         <section aria-label="Permainan Ludo" className="game-board-area game-board-stage">
           <LudoBoard
             currentPlayer={currentPlayer}
@@ -71,6 +74,19 @@ export default function GameShell() {
             onRoll={rollDice}
           />
         </section>
+        <aside aria-label="Riwayat giliran" className="turn-history">
+          <strong>Riwayat dadu</strong>
+          {(game.history ?? []).slice(-5).reverse().map((entry) => {
+            const player = game.players.find(
+              (candidate) => candidate.id === entry.playerId,
+            );
+            return (
+              <span key={entry.id}>
+                {player?.name ?? "Pemain"} · {entry.roll}
+              </span>
+            );
+          })}
+        </aside>
       </div>
 
       {winner && <WinnerModal onPlayAgain={resetGame} winner={winner} />}

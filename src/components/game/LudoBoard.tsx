@@ -12,6 +12,7 @@ import {
 } from "@/src/lib/engine/board";
 import { tokenCoordinate } from "@/src/lib/engine/rules";
 import { playTokenStepSound } from "@/src/lib/audio/sounds";
+import { useGameStore } from "@/src/store/gameStore";
 import {
   PLAYER_COLORS,
   type Coordinate,
@@ -32,6 +33,8 @@ interface AnimatedToken {
   step: number;
   color: string;
 }
+
+const HOP_MS = 240;
 
 function tokenBaseCoordinate(token: TokenState, player: Player): Coordinate {
   const slot = Number(token.id.slice(token.id.lastIndexOf("-") + 1)) - 1;
@@ -113,14 +116,17 @@ export default function LudoBoard({
     return result;
   }, [players]);
   const validIds = new Set(validTokenIds);
+  const pathHintEnabled = useGameStore((state) => state.pathHintEnabled);
   const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null);
   const [animatedToken, setAnimatedToken] = useState<AnimatedToken | null>(null);
   const movingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
     () => () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (autoMoveTimerRef.current) clearTimeout(autoMoveTimerRef.current);
     },
     [],
   );
@@ -179,11 +185,26 @@ export default function LudoBoard({
         step,
         color: PLAYER_COLORS[owner.color].hex,
       });
-      timerRef.current = setTimeout(advance, 125);
+      timerRef.current = setTimeout(advance, HOP_MS);
     };
 
-    timerRef.current = setTimeout(advance, 35);
+    timerRef.current = setTimeout(advance, 60);
   }
+
+  // Auto-jalan: begitu dadu berhenti dan hanya satu pion yang valid,
+  // pion itu langsung melangkah tanpa menunggu klik. Jeda singkat agar
+  // angka dadu sempat terbaca.
+  useEffect(() => {
+    if (autoMoveTimerRef.current) clearTimeout(autoMoveTimerRef.current);
+    if (diceValue === null || validTokenIds.length !== 1 || movingRef.current) {
+      return;
+    }
+    const tokenId = validTokenIds[0];
+    autoMoveTimerRef.current = setTimeout(() => {
+      autoMoveTimerRef.current = null;
+      animateMove(tokenId);
+    }, 500);
+  }, [diceValue, validTokenIds, players, tokens]);
 
   const hoveredToken = hoveredTokenId
     ? tokens.find((token) => token.id === hoveredTokenId)
@@ -241,6 +262,7 @@ export default function LudoBoard({
           className="ludo-board"
           role="group"
         >
+          <div aria-hidden="true" className="finish-triangles" />
           {Array.from({ length: 225 }, (_, index) => {
             const row = Math.floor(index / 15);
             const col = index % 15;
@@ -266,6 +288,7 @@ export default function LudoBoard({
                 : "",
               startColor ? "start-cell" : "",
               laneColor ? "home-lane-cell" : "",
+              laneColor && isCenter ? "center-lane-cell" : "",
               isCenter ? "center-cell" : "",
               row === 7 && col === 7 ? "center-core" : "",
             ]
@@ -319,29 +342,23 @@ export default function LudoBoard({
                     {occupants.length > 1 && (
                       <span className="token-count">x{occupants.length}</span>
                     )}
-                    {animatedToken && (
-                      <div
-                        aria-hidden="true"
-                        className="animated-token"
-                        key={animatedToken.id}
-                        style={{
-                          left: `${((animatedToken.coordinate.col + 0.5) / 15) * 100}%`,
-                          top: `${((animatedToken.coordinate.row + 0.5) / 15) * 100}%`,
-                          "--player-color": animatedToken.color,
-                          "--hop-y": animatedToken.step % 2 === 1 ? "-7px" : "0px",
-                          "--hop-scale": animatedToken.step % 2 === 1 ? "1.08" : "1",
-                        } as CSSProperties}
-                      >
-                        <span className="token-shine" />
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             );
           })}
-          {trajectory.length > 0 && (
-            <div className="trajectory-layer" aria-hidden="true">
+          {pathHintEnabled && trajectory.length > 0 && (
+            <div
+              className="trajectory-layer"
+              aria-hidden="true"
+              style={
+                {
+                  "--player-color": hoveredOwner
+                    ? PLAYER_COLORS[hoveredOwner.color].hex
+                    : "#33294e",
+                } as CSSProperties
+              }
+            >
               {trajectory.map((coordinate, index) => (
                 <span
                   className="trajectory-ghost"
@@ -352,6 +369,23 @@ export default function LudoBoard({
                   }}
                 />
               ))}
+            </div>
+          )}
+          {animatedToken && (
+            <div
+              aria-hidden="true"
+              className="animated-token"
+              style={
+                {
+                  left: `${((animatedToken.coordinate.col + 0.5) / 15) * 100}%`,
+                  top: `${((animatedToken.coordinate.row + 0.5) / 15) * 100}%`,
+                  "--player-color": animatedToken.color,
+                } as CSSProperties
+              }
+            >
+              <span className="animated-token-body" key={animatedToken.step}>
+                <span className="token-shine" />
+              </span>
             </div>
           )}
         </div>

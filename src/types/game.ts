@@ -39,6 +39,7 @@ export interface GameState {
   winnerId: string | null;
   lastRoll: number | null;
   lastRollByPlayer: Record<string, number | null>;
+  finishOrder: string[];
   message: string;
 }
 

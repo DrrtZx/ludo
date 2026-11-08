@@ -15,6 +15,8 @@ export default function GameShell() {
   const backToMenu = useGameStore((state) => state.backToMenu);
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const setHasHydrated = useGameStore((state) => state.setHasHydrated);
+  const pathHintEnabled = useGameStore((state) => state.pathHintEnabled);
+  const togglePathHint = useGameStore((state) => state.togglePathHint);
   const [showResetOptions, setShowResetOptions] = useState(false);
 
   useEffect(() => {
@@ -51,6 +53,15 @@ export default function GameShell() {
             <span className="online-dot" />
             Pass &amp; play
           </span>
+          <button
+            aria-pressed={pathHintEnabled}
+            className={`toggle-chip${pathHintEnabled ? " is-on" : ""}`}
+            onClick={togglePathHint}
+            type="button"
+          >
+            <span aria-hidden="true" className="toggle-dot" />
+            Arah jalur: {pathHintEnabled ? "ON" : "OFF"}
+          </button>
           <button className="secondary-button restart-button" onClick={() => setShowResetOptions(true)} type="button">
             <span aria-hidden="true">↻</span> Reset
           </button>
@@ -89,7 +100,13 @@ export default function GameShell() {
         </aside>
       </div>
 
-      {winner && <WinnerModal onPlayAgain={resetGame} winner={winner} />}
+      {winner && (
+        <WinnerModal
+          finishOrder={game.finishOrder ?? []}
+          onPlayAgain={resetGame}
+          players={game.players}
+        />
+      )}
       {showResetOptions && (
         <div className="winner-backdrop">
           <section

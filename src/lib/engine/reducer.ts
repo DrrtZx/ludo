@@ -10,6 +10,7 @@ import { START_INDICES } from "@/src/lib/engine/board";
 import {
   capturedTokenIds,
   destinationProgress,
+  FINISH_PROGRESS,
   legalTokenIds,
 } from "@/src/lib/engine/rules";
 
@@ -31,6 +32,7 @@ export const initialGameState: GameState = {
   winnerId: null,
   lastRoll: null,
   lastRollByPlayer: {},
+  finishOrder: [],
   message: "Pilih jumlah pemain dan siapkan permainan.",
 };
 
@@ -56,6 +58,7 @@ function freshMatch(players: Player[]): GameState {
     lastRollByPlayer: Object.fromEntries(
       players.map((player) => [player.id, null]),
     ),
+    finishOrder: [],
     message: `${players[0]?.name ?? "Pemain"} memulai permainan. Dapatkan 6 untuk mengeluarkan pion.`,
   };
 }
@@ -78,6 +81,28 @@ function playersFromSetup({ names }: PlayerSetup): Player[] {
 
 function nextPlayerIndex(state: GameState): number {
   return (state.currentPlayerIndex + 1) % state.players.length;
+}
+
+function playersWhoFinished(
+  tokens: TokenState[],
+  players: Player[],
+): string[] {
+  return players
+    .filter((player) =>
+      tokens
+        .filter((token) => token.playerId === player.id)
+        .every((token) => token.progress === FINISH_PROGRESS),
+    )
+    .map((player) => player.id);
+}
+
+// Giliran berikutnya: pemain yang sudah finis dilewati.
+function nextUnfinishedIndex(state: GameState, finishOrder: string[]): number {
+  let index = nextPlayerIndex(state);
+  while (finishOrder.includes(state.players[index]?.id ?? "")) {
+    index = (index + 1) % state.players.length;
+  }
+  return index;
 }
 
 function addHistory(
@@ -129,7 +154,7 @@ export function gameReducer(
       };
 
       if (consecutiveSixes >= 3) {
-        const nextIndex = nextPlayerIndex(state);
+        const nextIndex = nextUnfinishedIndex(state, state.finishOrder ?? []);
         const message = `${player.name} mendapat Triple 6. Lemparan ketiga dibatalkan.`;
         return {
           ...state,
@@ -150,7 +175,7 @@ export function gameReducer(
 
       const moves = legalTokenIds(state, player, action.payload.value);
       if (moves.length === 0) {
-        const nextIndex = nextPlayerIndex(state);
+        const nextIndex = nextUnfinishedIndex(state, state.finishOrder ?? []);
         const nextPlayer = state.players[nextIndex];
         const message = `${player.name} mendapat ${action.payload.value}, tetapi tidak ada langkah yang valid. Giliran ${nextPlayer.name}.`;
         return {
@@ -221,41 +246,59 @@ export function gameReducer(
           : token;
       });
 
-      const hasWon = tokens
-        .filter((token) => token.playerId === player.id)
-        .every((token) => token.progress === 57);
-      if (hasWon) {
+      const finishOrder = state.finishOrder ?? [];
+      const newFinishers = playersWhoFinished(tokens, state.players).filter(
+        (id) => !finishOrder.includes(id),
+      );
+      const updatedFinishOrder = [...finishOrder, ...newFinishers];
+
+      // Podium urutan finis: 4 pemain berhenti saat 3 orang finis,
+      // 3 pemain saat 2 orang, 2 pemain saat 1 orang.
+      if (updatedFinishOrder.length >= state.players.length - 1) {
+        const champion = state.players.find(
+          (candidate) => candidate.id === updatedFinishOrder[0],
+        );
         return {
           ...state,
           phase: "finished",
           tokens,
+          finishOrder: updatedFinishOrder,
           diceValue: null,
           consecutiveSixes: 0,
           validTokenIds: [],
-          winnerId: player.id,
-          message: `${player.name} memenangkan permainan!`,
+          winnerId: champion?.id ?? null,
+          message: `${champion?.name ?? player.name} menang! Permainan selesai.`,
         };
       }
 
       const captured = capturedIds.length > 0;
-      const reachedHome = nextProgress === 57;
-      const extraTurn = state.diceValue === 6 || captured || reachedHome;
+      const reachedHome = nextProgress === FINISH_PROGRESS;
+      const moverFinished = newFinishers.includes(player.id);
+      const extraTurn =
+        !moverFinished && (state.diceValue === 6 || captured || reachedHome);
       const currentPlayerIndex = extraTurn
         ? state.currentPlayerIndex
-        : nextPlayerIndex(state);
+        : nextUnfinishedIndex(state, updatedFinishOrder);
       const nextPlayer = state.players[currentPlayerIndex];
+      const podiumPosition = updatedFinishOrder.indexOf(player.id) + 1;
       const eventMessages = [
         captured ? `CAPTURED! ${capturedIds.length} pion lawan kembali ke base.` : "",
-        reachedHome ? "HOME! Lempar lagi." : "",
+        reachedHome && !moverFinished ? "HOME! Lempar lagi." : "",
+        moverFinished
+          ? `${player.name} finis di posisi ${podiumPosition}!`
+          : "",
       ].filter(Boolean);
-      const message = extraTurn
-        ? `${player.name} mendapat giliran tambahan! ${eventMessages.join(" ")}`
-        : `${nextPlayer?.name ?? "Pemain berikutnya"} mendapat giliran. ${eventMessages.join(" ")}`;
+      const message = moverFinished
+        ? `${eventMessages.join(" ")} Giliran ${nextPlayer?.name ?? "pemain berikutnya"}.`
+        : extraTurn
+          ? `${player.name} mendapat giliran tambahan! ${eventMessages.join(" ")}`
+          : `${nextPlayer?.name ?? "Pemain berikutnya"} mendapat giliran. ${eventMessages.join(" ")}`;
 
       return {
         ...state,
         tokens,
         currentPlayerIndex,
+        finishOrder: updatedFinishOrder,
         diceValue: null,
         consecutiveSixes: state.consecutiveSixes,
         validTokenIds: [],

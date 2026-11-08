@@ -366,157 +366,101 @@ input:focus-visible {
 /* ----- halaman permainan --------------------------------------------------- */
 
 .game-page {
+  position: relative;
   display: flex;
-  width: min(1480px, 100%);
+  width: 100%;
   height: 100dvh;
-  flex-direction: column;
-  margin: 0 auto;
-  padding: 14px max(12px, env(safe-area-inset-right)) 10px
-    max(12px, env(safe-area-inset-left));
+  margin: 0;
+  padding: 0;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-}
-
-.game-topbar {
-  margin-bottom: 10px;
-}
-
-.game-top-actions {
-  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
 }
 
-.restart-button {
-  width: auto;
-  min-height: 36px;
-  padding: 0 13px;
-}
-
-.toggle-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 0 13px;
+.floating-menu-btn {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 50;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-  box-shadow: 0 3px 0 #efdfc6;
-  transition: transform 180ms var(--ease-spring), box-shadow 180ms var(--ease-smooth),
-    border-color 180ms var(--ease-smooth), color 180ms var(--ease-smooth),
-    background-color 180ms var(--ease-smooth);
-}
-
-.toggle-chip:hover {
-  transform: translateY(-1px);
-}
-
-.toggle-chip:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 #efdfc6;
-}
-
-.toggle-dot {
-  width: 7px;
-  height: 7px;
   border-radius: 50%;
-  background: #d8cdbd;
-  transition: background-color 180ms var(--ease-smooth), box-shadow 180ms var(--ease-smooth);
-}
-
-.toggle-chip.is-on {
-  border-color: var(--amber);
-  background: #fff1d9;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
   color: var(--ink);
-  box-shadow: 0 3px 0 #ecd188;
+  font-size: 19px;
+  box-shadow: 0 3px 10px #6b4e2a18;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-spring), background-color 160ms, box-shadow 160ms;
 }
 
-.toggle-chip.is-on .toggle-dot {
-  background: var(--amber);
-  box-shadow: 0 0 0 3px #e7aa3830;
+.floating-menu-btn:hover {
+  transform: scale(1.08);
+  background: #ffffff;
+  box-shadow: 0 5px 14px #6b4e2a22;
+}
+
+.floating-menu-btn:active {
+  transform: scale(0.92);
 }
 
 .game-room {
   display: flex;
   width: 100%;
-  min-height: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.game-status-message {
-  order: 2;
-  max-width: 700px;
-  min-height: 18px;
-  margin: 0 auto;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.5;
-  text-align: center;
-}
-
-/* Papan memenuhi layar: lebarnya mengikuti sisi terkecil viewport
-   sehingga di portrait ia selebar layar dan di landscape setinggi layar. */
-.game-board-area {
-  order: 1;
-  display: flex;
-  width: min(100%, calc(100dvh - 190px));
+  height: 100%;
   min-height: 0;
   flex: 1;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
+  padding: 4px;
+  margin: 0;
+}
+
+/* Papan memenuhi layar perangkat (maksimal di layar Android) */
+.game-board-area {
+  display: flex;
+  width: min(calc(100vw - 8px), calc(100dvh - 8px), 720px);
+  aspect-ratio: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
 }
 
 .game-board-area .board-card {
   width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* ----- kartu papan ---------------------------------------------------------- */
 
 .board-card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: var(--surface);
-  box-shadow: var(--shadow-solid), var(--shadow-warm);
-}
-
-.board-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 4px 13px;
-}
-
-.board-heading h2 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.board-hint {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 500;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .board-frame {
   position: relative;
   width: 100%;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px #fff, 0 3px 8px #6b4e2a0d;
-  perspective: 1300px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  perspective: none;
 }
 
 /* ----- papan ---------------------------------------------------------------- */
@@ -525,50 +469,43 @@ input:focus-visible {
   position: relative;
   display: grid;
   width: 100%;
+  height: 100%;
   aspect-ratio: 1;
   grid-template: repeat(15, minmax(0, 1fr)) / repeat(15, minmax(0, 1fr));
   overflow: hidden;
-  border: 1px solid #e8d9c2;
-  border-radius: 12px;
+  border: 1.5px solid #dfcfb7;
+  border-radius: 14px;
   background: var(--sand);
-  box-shadow: 0 6px 0 #ecd9ba, 0 16px 26px #6b4e2a16;
-  transform: rotateX(4deg);
-  transform-origin: center bottom;
-  transform-style: preserve-3d;
-  transition: transform 350ms var(--ease-smooth), box-shadow 350ms var(--ease-smooth);
+  box-shadow: 0 4px 18px #6b4e2a14;
+  transform: none;
+  transform-style: flat;
 }
 
 .board-frame:hover .ludo-board {
-  transform: rotateX(1.5deg) translateY(-2px);
-  box-shadow: 0 8px 0 #ecd9ba, 0 22px 30px #6b4e2a1c;
+  transform: none;
+  box-shadow: 0 4px 18px #6b4e2a14;
 }
 
-/* Finish: 4 segitiga mengarah ke lane masing-masing (sky atas, mint kanan,
-   amber bawah, coral kiri) dengan garis putih diagonal. */
+/* Finish: area tengah kotak segitiga dibuat putih dengan garis pembatas diagonal */
 .finish-triangles {
   grid-row: 7 / span 3;
   grid-column: 7 / span 3;
   border-radius: 8px;
+  border: 1px solid var(--line);
   background:
     linear-gradient(
       45deg,
       transparent calc(50% - 0.75px),
-      #fff calc(50% - 0.75px) calc(50% + 0.75px),
+      var(--line) calc(50% - 0.75px) calc(50% + 0.75px),
       transparent calc(50% + 0.75px)
     ),
     linear-gradient(
       -45deg,
       transparent calc(50% - 0.75px),
-      #fff calc(50% - 0.75px) calc(50% + 0.75px),
+      var(--line) calc(50% - 0.75px) calc(50% + 0.75px),
       transparent calc(50% + 0.75px)
     ),
-    conic-gradient(
-      from 315deg,
-      var(--sky) 0 90deg,
-      var(--mint) 0 90deg,
-      var(--amber) 0 90deg,
-      var(--coral) 0 90deg
-    );
+    #ffffff;
   pointer-events: none;
 }
 
@@ -745,32 +682,12 @@ input:focus-visible {
   animation: token-hop 240ms cubic-bezier(0.35, 0.6, 0.4, 1) both;
 }
 
-/* ----- lintasan preview ------------------------------------------------------ */
-
-.trajectory-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.trajectory-ghost {
-  position: absolute;
-  width: 4%;
-  aspect-ratio: 1;
-  border: 2px dashed color-mix(in srgb, var(--player-color), transparent 45%);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--player-color), transparent 90%);
-  transform: translate(-50%, -50%);
-  animation: ghost-in 240ms var(--ease-smooth) both;
-}
-
 /* ----- chip dadu di base ------------------------------------------------------ */
 
 .base-dice-layer {
   position: absolute;
   z-index: 6;
-  inset: 10px;
+  inset: 0;
   pointer-events: none;
 }
 
@@ -1104,13 +1021,6 @@ input:focus-visible {
   from { opacity: 0; }
 }
 
-@keyframes ghost-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.6);
-  }
-}
-
 @keyframes confetti-fall {
   0% {
     opacity: 1;
@@ -1156,7 +1066,7 @@ input:focus-visible {
   }
 
   .game-board-area {
-    width: min(100%, calc(100dvh - 170px));
+    width: min(calc(100vw - 12px), calc(100dvh - 12px), 720px);
   }
 }
 
@@ -1175,49 +1085,23 @@ input:focus-visible {
   }
 
   .game-page {
-    padding: 12px max(10px, env(safe-area-inset-right)) 16px
-      max(10px, env(safe-area-inset-left));
-  }
-
-  .game-top-actions {
-    gap: 6px;
-  }
-
-  .restart-button {
-    min-height: 34px;
-    padding: 0 9px;
-    font-size: 10px;
+    padding: 0;
   }
 
   .game-board-area {
-    width: min(100%, calc(100dvh - 140px));
+    width: min(calc(100vw - 8px), calc(100dvh - 8px));
   }
 
   .board-card {
-    padding: 12px;
-    border-radius: 18px;
+    padding: 0;
   }
 
   .board-frame {
-    padding: 7px;
-    border-radius: 14px;
-  }
-
-  .board-heading h2 {
-    font-size: 12px;
-  }
-
-  .board-hint {
-    max-width: 115px;
-    text-align: right;
+    padding: 0;
   }
 
   .animated-token {
     width: 5%;
-  }
-
-  .game-status-message {
-    font-size: 12px;
   }
 
   .dice-face {
@@ -1238,7 +1122,7 @@ input:focus-visible {
   }
 
   .base-dice-layer {
-    inset: 7px;
+    inset: 0;
   }
 
   .base-dice-position .dice-control {

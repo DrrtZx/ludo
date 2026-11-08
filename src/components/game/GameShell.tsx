@@ -15,8 +15,6 @@ export default function GameShell() {
   const backToMenu = useGameStore((state) => state.backToMenu);
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const setHasHydrated = useGameStore((state) => state.setHasHydrated);
-  const pathHintEnabled = useGameStore((state) => state.pathHintEnabled);
-  const togglePathHint = useGameStore((state) => state.togglePathHint);
   const [showResetOptions, setShowResetOptions] = useState(false);
 
   useEffect(() => {
@@ -38,40 +36,16 @@ export default function GameShell() {
 
   return (
     <main className="app-shell game-page">
-      <header className="topbar game-topbar">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            🎲
-          </div>
-          <div>
-            <p className="brand-name">ludoo</p>
-            <p className="brand-caption">main bareng, satu meja</p>
-          </div>
-        </div>
-        <div className="game-top-actions">
-          <span className="local-badge">
-            <span className="online-dot" />
-            Pass &amp; play
-          </span>
-          <button
-            aria-pressed={pathHintEnabled}
-            className={`toggle-chip${pathHintEnabled ? " is-on" : ""}`}
-            onClick={togglePathHint}
-            type="button"
-          >
-            <span aria-hidden="true" className="toggle-dot" />
-            Arah jalur: {pathHintEnabled ? "ON" : "OFF"}
-          </button>
-          <button className="secondary-button restart-button" onClick={() => setShowResetOptions(true)} type="button">
-            <span aria-hidden="true">↻</span> Reset
-          </button>
-        </div>
-      </header>
+      <button
+        aria-label="Menu permainan"
+        className="floating-menu-btn"
+        onClick={() => setShowResetOptions(true)}
+        type="button"
+      >
+        ⚙
+      </button>
 
       <div className="game-room">
-        <p aria-live="polite" className="game-status-message">
-          {game.message}
-        </p>
         <section aria-label="Permainan Ludo" className="game-board-area game-board-stage">
           <LudoBoard
             currentPlayer={currentPlayer}
@@ -85,19 +59,6 @@ export default function GameShell() {
             onRoll={rollDice}
           />
         </section>
-        <aside aria-label="Riwayat giliran" className="turn-history">
-          <strong>Riwayat dadu</strong>
-          {(game.history ?? []).slice(-5).reverse().map((entry) => {
-            const player = game.players.find(
-              (candidate) => candidate.id === entry.playerId,
-            );
-            return (
-              <span key={entry.id}>
-                {player?.name ?? "Pemain"} · {entry.roll}
-              </span>
-            );
-          })}
-        </aside>
       </div>
 
       {winner && (

@@ -11,8 +11,6 @@ import type { GameState, PlayerSetup } from "@/src/types/game";
 
 interface GameStore {
   game: GameState;
-  pathHintEnabled: boolean;
-  togglePathHint: () => void;
   setup: (payload: PlayerSetup) => void;
   rollDice: () => void;
   moveToken: (tokenId: string) => void;
@@ -30,9 +28,6 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set) => ({
       game: initialGameState,
-      pathHintEnabled: false,
-      togglePathHint: () =>
-        set((state) => ({ pathHintEnabled: !state.pathHintEnabled })),
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
       setup: (payload) =>
@@ -58,7 +53,6 @@ export const useGameStore = create<GameStore>()(
       skipHydration: true,
       partialize: (state) => ({
         game: state.game,
-        pathHintEnabled: state.pathHintEnabled,
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) console.error("Gagal memulihkan permainan Ludo:", error);

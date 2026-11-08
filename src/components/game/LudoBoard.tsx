@@ -12,7 +12,6 @@ import {
 } from "@/src/lib/engine/board";
 import { tokenCoordinate } from "@/src/lib/engine/rules";
 import { playTokenStepSound } from "@/src/lib/audio/sounds";
-import { useGameStore } from "@/src/store/gameStore";
 import {
   PLAYER_COLORS,
   type Coordinate,
@@ -116,8 +115,6 @@ export default function LudoBoard({
     return result;
   }, [players]);
   const validIds = new Set(validTokenIds);
-  const pathHintEnabled = useGameStore((state) => state.pathHintEnabled);
-  const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null);
   const [animatedToken, setAnimatedToken] = useState<AnimatedToken | null>(null);
   const movingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -206,36 +203,8 @@ export default function LudoBoard({
     }, 500);
   }, [diceValue, validTokenIds, players, tokens]);
 
-  const hoveredToken = hoveredTokenId
-    ? tokens.find((token) => token.id === hoveredTokenId)
-    : null;
-  const hoveredOwner = hoveredToken
-    ? players.find((player) => player.id === hoveredToken.playerId)
-    : null;
-  const trajectory =
-    hoveredToken && hoveredOwner && diceValue !== null
-      ? Array.from(
-          { length: hoveredToken.progress === -1 ? 1 : diceValue },
-          (_, index) =>
-            tokenCoordinate(
-              hoveredOwner,
-              hoveredToken.progress === -1
-                ? 0
-                : hoveredToken.progress + index + 1,
-            ),
-        ).filter((coordinate): coordinate is Coordinate => coordinate !== null)
-      : [];
-
   return (
     <div className="board-card">
-      <div className="board-heading">
-        <h2>Papan permainan</h2>
-        <span className="board-hint">
-          {validIds.size > 0
-            ? "Pilih pion yang menyala"
-            : "Bawa 4 pionmu ke tengah"}
-        </span>
-      </div>
       <div className="board-frame">
         <div aria-label="Dadu pemain di base" className="base-dice-layer">
           {players.map((player) => {
@@ -330,10 +299,6 @@ export default function LudoBoard({
                           key={token.id}
                           label={`${owner.name}, pion ${token.id.slice(-1)}${selectable ? ", pilih untuk bergerak" : ""}`}
                           onClick={() => animateMove(token.id)}
-                          onMouseEnter={() =>
-                            selectable && setHoveredTokenId(token.id)
-                          }
-                          onMouseLeave={() => setHoveredTokenId(null)}
                           selectable={selectable}
                           small={!onCurrentPlayer && occupants.length > 1}
                         />
@@ -347,30 +312,6 @@ export default function LudoBoard({
               </div>
             );
           })}
-          {pathHintEnabled && trajectory.length > 0 && (
-            <div
-              className="trajectory-layer"
-              aria-hidden="true"
-              style={
-                {
-                  "--player-color": hoveredOwner
-                    ? PLAYER_COLORS[hoveredOwner.color].hex
-                    : "#33294e",
-                } as CSSProperties
-              }
-            >
-              {trajectory.map((coordinate, index) => (
-                <span
-                  className="trajectory-ghost"
-                  key={`${coordinate.row},${coordinate.col}-${index}`}
-                  style={{
-                    left: `${((coordinate.col + 0.5) / 15) * 100}%`,
-                    top: `${((coordinate.row + 0.5) / 15) * 100}%`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
           {animatedToken && (
             <div
               aria-hidden="true"
@@ -389,17 +330,6 @@ export default function LudoBoard({
             </div>
           )}
         </div>
-      </div>
-      <div aria-label="Warna pemain" className="board-footer">
-        {players.map((player) => (
-          <span className="legend-item" key={player.id}>
-            <span
-              className="legend-dot"
-              style={{ "--player-color": PLAYER_COLORS[player.color].hex } as CSSProperties}
-            />
-            {player.name}
-          </span>
-        ))}
       </div>
     </div>
   );
